@@ -1,3 +1,5 @@
+import random
+
 class Polynomial:
     def __init__(self, coefficients):
         self.coefficients = coefficients[:]
@@ -138,10 +140,11 @@ class Polynomial:
                 result += " + " + term
         return result
 
+    def __repr__(self):
+        return str(self)
 
 
-
-
-p = Polynomial([1, 0, -2])  # Rappresenta x^2 - 2
-q = Polynomial([0, 1])      # Rappresenta x
+def random_polynomial(degree, coeff_range):
+    coefficients = [random.randint(-coeff_range, coeff_range) for _ in range(degree + 1)]
+    return Polynomial(coefficients)
 
