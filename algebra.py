@@ -1,5 +1,7 @@
 import random
 from itertools import zip_longest
+import math
+from fractions import Fraction
 
 class Polynomial:
     def __init__(self, coefficients):
@@ -25,8 +27,15 @@ class Polynomial:
             for j, c2 in enumerate(other.coefficients):
                 res[i+j] += c1*c2
         return Polynomial(res)
-
+    
+    def __eq__(self, other):
+        self.trim()
+        other.trim()
+        return self.coefficients == other.coefficients
+    
     def __str__(self):
+        if all(c == 0 for c in self.coefficients):
+            return "0"
         terms = []
         for power, coeff in enumerate(self.coefficients):
             if coeff == 0:
@@ -40,6 +49,17 @@ class Polynomial:
             terms.append(term)
         return " + ".join(terms[::-1]).replace("+ -", "- ")
 
+class Equation:
+    def __init__(self, sides):
+        self.left, self.right = sides
+
+    def __str__(self):
+        return f"{self.left} = {self.right}"
+
+    def simplify(self):
+        simplified_poly = self.left - self.right
+        return Equation([simplified_poly, Polynomial([0])])
+
 def random_polynomial(max_degree, coeff_range):
     degree = random.randint(0, max_degree)
     coefficients = [random.randint(-coeff_range, coeff_range) for _ in range(degree + 1)]
@@ -50,18 +70,34 @@ def random_polynomial(max_degree, coeff_range):
 def create_expression(max_degree, coeff_range, num_terms):
     expr_poly = random_polynomial(max_degree, coeff_range)
     expr_str = str(expr_poly)
-
     for _ in range(num_terms - 1):
         op = random.choice(['+', '-', '*'])
         next_poly = random_polynomial(max_degree, coeff_range)
         expr_str = f"({expr_str} {op} {next_poly})"
-
         if op == '+':
             expr_poly += next_poly
         elif op == '-':
             expr_poly -= next_poly
         elif op == '*':
             expr_poly *= next_poly
-
     return expr_str, expr_poly
+
+def create_equation(max_degree, coeff_range, difficulty):
+    p = random.randint(-5, 5)
+    q = random.randint(1, 5) 
+    x0 = Fraction(p, q)
+
+    str_left, poly_left = create_expression(max_degree, coeff_range, difficulty)
+    str_right, poly_right = create_expression(max_degree, coeff_range, difficulty)
+
+    value_left_no_const = sum(c * (x0 ** i) for i, c in enumerate(poly_left.coefficients[1:], start=1))
+    value_right_no_const = sum(c * (x0 ** i) for i, c in enumerate(poly_right.coefficients[1:], start=1)) + poly_right.coefficients[0]
+
+    new_const = int(value_left_no_const + poly_left.coefficients[0] - value_right_no_const)
+    poly_right.coefficients[0] = new_const
+
+    eq_str = f"{str_left} = {str_right}"
+    eq = Equation([poly_left, poly_right])
+
+    return eq_str, eq, float(x0)
 
